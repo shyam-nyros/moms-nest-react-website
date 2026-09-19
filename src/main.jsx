@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Search,
@@ -7,6 +7,7 @@ import {
   Menu,
   X,
   ArrowRight,
+  ArrowUp,
   Heart,
   Leaf,
   CookingPot,
@@ -20,30 +21,184 @@ import {
   Youtube,
   MessageCircle,
   Star,
+  Plus,
+  Minus,
+  Trash2,
+  Send,
 } from "lucide-react";
 import "./styles.css";
 import { chickenPickleImage, products, reviews } from "./data/products";
 
+const WHATSAPP_NUMBER = "919876543210";
+const CONTACT_EMAIL = "hello@momsnest.in";
+
+const NAV_LINKS = [
+  ["Home", "home"],
+  ["Pickles", "pickles"],
+  ["Our Story", "story"],
+  ["Ingredients", "ingredients"],
+  ["Reviews", "reviews"],
+  ["Contact", "contact"],
+];
+
+const SECTION_ORDER = ["home", "pickles", "story", "ingredients", "reviews", "contact"];
+
+function parsePrice(price) {
+  return Number(String(price).replace(/[^0-9.]/g, "")) || 0;
+}
+
 function App() {
   const [menu, setMenu] = useState(false);
-  const [cart, setCart] = useState(0);
+  const [cartItems, setCartItems] = useState([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [toast, setToast] = useState(null);
   const [rev, setRev] = useState(0);
+  const [activeSection, setActiveSection] = useState("home");
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  const toastTimer = useRef(null);
+  const searchInputRef = useRef(null);
+  const navActionsRef = useRef(null);
 
   const go = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     setMenu(false);
   };
 
-  const nextReview = () => {
-    setRev((current) => (current + 1) % reviews.length);
+  const showToast = (message) => {
+    setToast(message);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2600);
   };
 
-  const previousReview = () => {
+  const addToCart = (product) => {
+    setCartItems((current) => {
+      const existing = current.find((item) => item.name === product.name);
+      if (existing) {
+        return current.map((item) =>
+          item.name === product.name ? { ...item, qty: item.qty + 1 } : item
+        );
+      }
+      return [...current, { ...product, qty: 1 }];
+    });
+    showToast(`${product.name} added to cart`);
+  };
+
+  const updateQty = (name, delta) => {
+    setCartItems((current) =>
+      current
+        .map((item) => (item.name === name ? { ...item, qty: item.qty + delta } : item))
+        .filter((item) => item.qty > 0)
+    );
+  };
+
+  const removeFromCart = (name) => {
+    setCartItems((current) => current.filter((item) => item.name !== name));
+  };
+
+  const cartCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
+  const cartTotal = cartItems.reduce(
+    (sum, item) => sum + parsePrice(item.price) * item.qty,
+    0
+  );
+
+  const checkoutOnWhatsApp = () => {
+    const lines = cartItems.map(
+      (item) => `- ${item.name} x${item.qty} — ₹${parsePrice(item.price) * item.qty}`
+    );
+    const message = [
+      "Hi Mom's Nest! I'd like to order:",
+      ...lines,
+      `Total: ₹${cartTotal}`,
+    ].join("\n");
+
+    window.open(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return products;
+    const q = searchQuery.trim().toLowerCase();
+    return products.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    const onClickOutside = (event) => {
+      if (navActionsRef.current && !navActionsRef.current.contains(event.target)) {
+        setSearchOpen(false);
+        setAccountOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key !== "Escape") return;
+      setCartOpen(false);
+      setSearchOpen(false);
+      setAccountOpen(false);
+      setMenu(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowBackToTop(window.scrollY > 700);
+
+      const scrollPos = window.scrollY + 140;
+      let current = SECTION_ORDER[0];
+      for (const id of SECTION_ORDER) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        if (top <= scrollPos) current = id;
+      }
+      setActiveSection(current);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const nextReview = () => setRev((current) => (current + 1) % reviews.length);
+  const previousReview = () =>
     setRev((current) => (current - 1 + reviews.length) % reviews.length);
+
+  const handleContactSubmit = (event) => {
+    event.preventDefault();
+    const form = event.target;
+    const name = form.name.value.trim();
+    const email = form.email.value.trim();
+    const messageText = form.message.value.trim();
+
+    const subject = encodeURIComponent(`Enquiry from ${name || "website visitor"}`);
+    const body = encodeURIComponent(`${messageText}\n\n— ${name} (${email})`);
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+    showToast("Opening your email app…");
   };
 
   return (
     <div className="site">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
+
       <div className="announcement">
         <span>✦ Traditional Taste</span>
         <b>|</b>
@@ -60,6 +215,7 @@ function App() {
           className="mobile-menu"
           onClick={() => setMenu((current) => !current)}
           aria-label="Toggle navigation menu"
+          aria-expanded={menu}
         >
           {menu ? <X /> : <Menu />}
         </button>
@@ -72,42 +228,96 @@ function App() {
           </span>
         </button>
 
-        <nav className={menu ? "nav-links open" : "nav-links"}>
-          {[
-            ["Home", "home"],
-            ["Our Story", "story"],
-            ["Pickles", "pickles"],
-            ["Ingredients", "ingredients"],
-            ["Reviews", "reviews"],
-            ["Contact", "contact"],
-          ].map(([label, id]) => (
-            <button key={id} onClick={() => go(id)}>
+        <nav className={menu ? "nav-links open" : "nav-links"} aria-label="Primary">
+          {NAV_LINKS.map(([label, id]) => (
+            <button
+              key={id}
+              onClick={() => go(id)}
+              className={activeSection === id ? "active" : ""}
+              aria-current={activeSection === id ? "page" : undefined}
+            >
               {label}
             </button>
           ))}
         </nav>
 
-        <div className="nav-actions">
-          <button aria-label="Search">
-            <Search />
-          </button>
+        <div className="nav-actions" ref={navActionsRef}>
+          <div className="search-wrap">
+            <button
+              aria-label={searchOpen ? "Close search" : "Search"}
+              aria-expanded={searchOpen}
+              onClick={() => {
+                setAccountOpen(false);
+                setSearchOpen((current) => !current);
+              }}
+            >
+              {searchOpen ? <X /> : <Search />}
+            </button>
 
-          <button aria-label="Account">
-            <UserRound />
-          </button>
+            {searchOpen && (
+              <div className="dropdown-panel search-panel" role="search">
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  placeholder="Search pickles…"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      setSearchOpen(false);
+                      go("pickles");
+                    }
+                  }}
+                  aria-label="Search pickles"
+                />
+                <p className="search-hint">
+                  {searchQuery.trim()
+                    ? `${filteredProducts.length} result${
+                        filteredProducts.length === 1 ? "" : "s"
+                      } for "${searchQuery}"`
+                    : "Try “prawn”, “cashew”, “spicy”…"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="account-wrap">
+            <button
+              aria-label="Account"
+              aria-expanded={accountOpen}
+              onClick={() => {
+                setSearchOpen(false);
+                setAccountOpen((current) => !current);
+              }}
+            >
+              <UserRound />
+            </button>
+
+            {accountOpen && (
+              <div className="dropdown-panel account-panel" role="menu">
+                <p>
+                  <strong>Accounts are coming soon.</strong>
+                </p>
+                <p>Need help with an order or have a question?</p>
+                <a href={`mailto:${CONTACT_EMAIL}`}>
+                  Email us <ArrowRight size={14} />
+                </a>
+              </div>
+            )}
+          </div>
 
           <button
             className="cart"
-            onClick={() => go("pickles")}
-            aria-label="Shopping cart"
+            onClick={() => setCartOpen(true)}
+            aria-label={`Shopping cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
           >
             <ShoppingBag />
-            {cart > 0 && <span>{cart}</span>}
+            {cartCount > 0 && <span>{cartCount}</span>}
           </button>
         </div>
       </header>
 
-      <main>
+      <main id="main-content">
         <section className="hero" id="home">
           <div className="hero-copy">
             <p className="eyebrow">TRADITIONAL • HOMEMADE • ANDHRA</p>
@@ -162,34 +372,44 @@ function App() {
                 Our Pickles <span>♡</span>
               </h2>
             </div>
-
-            <button className="text-btn" onClick={() => go("pickles")}>
-              Explore All <ArrowRight />
-            </button>
           </div>
 
+          {searchQuery.trim() && (
+            <p className="search-status">
+              Showing {filteredProducts.length} result
+              {filteredProducts.length === 1 ? "" : "s"} for "{searchQuery}"
+              <button onClick={() => setSearchQuery("")}>Clear search</button>
+            </p>
+          )}
+
           <div className="product-grid">
-            {products.map(({ name, description, price, image }) => (
-              <article className="product-card" key={name}>
-                <div className="product-image">
-                  <img src={image} alt={name} />
-                  <span className="badge">HANDMADE</span>
-                </div>
-
-                <div className="product-info">
-                  <h3>{name}</h3>
-                  <p>{description}</p>
-
-                  <div className="product-bottom">
-                    <strong>{price}</strong>
-
-                    <button onClick={() => setCart((current) => current + 1)}>
-                      Add to cart <ArrowRight />
-                    </button>
+            {filteredProducts.length === 0 ? (
+              <p className="no-results">
+                No pickles match "{searchQuery}". Try a different search.
+              </p>
+            ) : (
+              filteredProducts.map(({ name, description, price, image }) => (
+                <article className="product-card" key={name}>
+                  <div className="product-image">
+                    <img src={image} alt={name} loading="lazy" decoding="async" />
+                    <span className="badge">HANDMADE</span>
                   </div>
-                </div>
-              </article>
-            ))}
+
+                  <div className="product-info">
+                    <h3>{name}</h3>
+                    <p>{description}</p>
+
+                    <div className="product-bottom">
+                      <strong>{price}</strong>
+
+                      <button onClick={() => addToCart({ name, price, image })}>
+                        Add to cart <ArrowRight />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
           </div>
         </section>
 
@@ -212,8 +432,8 @@ function App() {
               love.
             </p>
 
-            <button className="light-btn" onClick={() => go("story")}>
-              Our Story <ArrowRight />
+            <button className="light-btn" onClick={() => go("contact")}>
+              Get in Touch <ArrowRight />
             </button>
           </div>
 
@@ -283,9 +503,63 @@ function App() {
             </button>
           </div>
         </section>
+
+        <section className="contact" id="contact">
+          <div>
+            <p className="kicker light">GET IN TOUCH</p>
+
+            <h2>
+              We'd love <i>to hear</i> from you ♡
+            </h2>
+
+            <p>
+              Questions about flavours, bulk orders or gifting? Send us a
+              message and we'll get back to you within a day.
+            </p>
+
+            <div className="contact-list">
+              <span>
+                <Phone /> <a href="tel:+919876543210">+91 98765 43210</a>
+              </span>
+              <span>
+                <Mail /> <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+              </span>
+              <span>
+                <MapPin /> Visakhapatnam, Andhra Pradesh
+              </span>
+            </div>
+          </div>
+
+          <form className="contact-form" onSubmit={handleContactSubmit}>
+            <div>
+              <label htmlFor="contact-name">Name</label>
+              <input id="contact-name" name="name" type="text" required autoComplete="name" />
+            </div>
+
+            <div>
+              <label htmlFor="contact-email">Email</label>
+              <input
+                id="contact-email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="contact-message">Message</label>
+              <textarea id="contact-message" name="message" rows={4} required />
+            </div>
+
+            <button className="primary-btn" type="submit">
+              Send Message <Send size={17} />
+            </button>
+          </form>
+        </section>
       </main>
 
-      <footer id="contact">
+      <footer>
         <div className="footer-brand">
           <span className="brand-mark">⌁</span>
 
@@ -306,10 +580,10 @@ function App() {
           <p>Follow us for updates, new flavours & more.</p>
 
           <div className="socials">
-            <Instagram />
-            <Facebook />
-            <MessageCircle />
-            <Youtube />
+            <Instagram aria-hidden="true" />
+            <Facebook aria-hidden="true" />
+            <MessageCircle aria-hidden="true" />
+            <Youtube aria-hidden="true" />
           </div>
         </div>
 
@@ -325,11 +599,11 @@ function App() {
           <h4>Contact Us</h4>
 
           <p>
-            <Phone /> +91 98765 43210
+            <Phone /> <a href="tel:+919876543210">+91 98765 43210</a>
           </p>
 
           <p>
-            <Mail /> hello@momsnest.in
+            <Mail /> <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </p>
 
           <p>
@@ -342,6 +616,107 @@ function App() {
         © 2026 Mom's Nest. All rights reserved.{" "}
         <span>Made with ♥ for authentic flavours.</span>
       </div>
+
+      {toast && (
+        <div className="toast" role="status" aria-live="polite">
+          {toast}
+        </div>
+      )}
+
+      {showBackToTop && (
+        <button
+          className="back-to-top"
+          aria-label="Back to top"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <ArrowUp />
+        </button>
+      )}
+
+      {cartOpen && (
+        <div className="drawer-overlay" onClick={() => setCartOpen(false)}>
+          <aside
+            className="cart-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Shopping cart"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="drawer-head">
+              <h3>Your Cart</h3>
+              <button aria-label="Close cart" onClick={() => setCartOpen(false)}>
+                <X />
+              </button>
+            </div>
+
+            {cartItems.length === 0 ? (
+              <div className="cart-empty">
+                <ShoppingBag />
+                <p>Your cart is empty.</p>
+                <button
+                  className="primary-btn"
+                  onClick={() => {
+                    setCartOpen(false);
+                    go("pickles");
+                  }}
+                >
+                  Shop Pickles <ArrowRight />
+                </button>
+              </div>
+            ) : (
+              <>
+                <ul className="cart-list">
+                  {cartItems.map((item) => (
+                    <li key={item.name} className="cart-item">
+                      <img src={item.image} alt="" />
+
+                      <div className="cart-item-info">
+                        <strong>{item.name}</strong>
+                        <span>{item.price}</span>
+
+                        <div className="qty-control">
+                          <button
+                            aria-label={`Decrease ${item.name} quantity`}
+                            onClick={() => updateQty(item.name, -1)}
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span>{item.qty}</span>
+                          <button
+                            aria-label={`Increase ${item.name} quantity`}
+                            onClick={() => updateQty(item.name, 1)}
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        className="cart-remove"
+                        aria-label={`Remove ${item.name} from cart`}
+                        onClick={() => removeFromCart(item.name)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="cart-footer">
+                  <div className="cart-total">
+                    <span>Subtotal</span>
+                    <strong>₹{cartTotal}</strong>
+                  </div>
+
+                  <button className="primary-btn full" onClick={checkoutOnWhatsApp}>
+                    Checkout on WhatsApp <MessageCircle size={17} />
+                  </button>
+                </div>
+              </>
+            )}
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
