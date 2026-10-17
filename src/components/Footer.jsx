@@ -43,7 +43,7 @@ export default function Footer({ go, contactEmail }) {
         <h4>Contact Us</h4>
 
         <p>
-          <Phone /> <a href="tel:+919876543210">+91 98765 43210</a>
+          <Phone /> <a href="tel:+918985998996">+91 89859 98996</a>
         </p>
 
         <p>
@@ -51,7 +51,7 @@ export default function Footer({ go, contactEmail }) {
         </p>
 
         <p>
-          <MapPin /> Visakhapatnam, Andhra Pradesh
+          <MapPin /> Analysis Nine Cube, Old Water Tank Road, Samalkot
         </p>
       </div>
     </footer>

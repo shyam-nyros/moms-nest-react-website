@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-const WHATSAPP_NUMBER = "919876543210";
+const WHATSAPP_NUMBER = "918985998996";
 
 const cartKey = (name, size) => (size ? `${name}__${size}` : name);
 

@@ -17,13 +17,13 @@ export default function ContactSection({ contactEmail, onSubmit }) {
 
         <div className="contact-list">
           <span>
-            <Phone /> <a href="tel:+919876543210">+91 98765 43210</a>
+            <Phone /> <a href="tel:+918985998996">+91 89859 98996</a>
           </span>
           <span>
             <Mail /> <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
           </span>
           <span>
-            <MapPin /> Visakhapatnam, Andhra Pradesh
+            <MapPin /> Analysis Nine Cube, Old Water Tank Road, Samalkot
           </span>
         </div>
       </div>

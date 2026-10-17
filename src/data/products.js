@@ -2,6 +2,12 @@ import chickenPickleImage from "../assets/products/chicken-pickle.jpeg.jpeg";
 import prawnPickleImage from "../assets/products/prawn-pickle.jpeg.jpeg";
 import keemaPickleImage from "../assets/products/keema-pickle.jpeg.jpeg";
 import cashewPickleImage from "../assets/products/cashew-pickle.jpeg.jpeg";
+import gonguraChickenPickleImage from "../assets/products/gongura-chicken-pickle.jpeg";
+import gonguraChickenBonelessPickleImage from "../assets/products/gongura-chicken-boneless-pickle.jpeg";
+import muttonPickleImage from "../assets/products/mutton-pickle.jpeg";
+import gonguraMuttonPickleImage from "../assets/products/gongura-mutton-pickle.jpeg";
+import gonguraMuttonKheemaPickleImage from "../assets/products/gongura-mutton-kheema-pickle.jpeg";
+import gonguraPrawnPickleImage from "../assets/products/gongura-prawn-pickle.jpeg";
 
 export const SIZE_OPTIONS = ["250gm", "500gm", "1kg"];
 
@@ -51,42 +57,42 @@ export const fullMenu = [
     category: "Chicken Pickles",
     name: "Gongura Chicken Bone",
     description: "Tangy gongura meets chicken.",
-    image: chickenPickleImage,
+    image: gonguraChickenPickleImage,
     prices: { "250gm": 399, "500gm": 799, "1kg": 1599 },
   },
   {
     category: "Chicken Pickles",
     name: "Gongura Chicken Boneless",
     description: "Tangy gongura, boneless bite.",
-    image: chickenPickleImage,
+    image: gonguraChickenBonelessPickleImage,
     prices: { "250gm": 499, "500gm": 999, "1kg": 1999 },
   },
   {
     category: "Mutton Pickles",
     name: "Mutton Bone Pickle",
     description: "Rich mutton, slow-cooked spice.",
-    image: keemaPickleImage,
+    image: muttonPickleImage,
     prices: { "250gm": 550, "500gm": 1100, "1kg": 2200 },
   },
   {
     category: "Mutton Pickles",
     name: "Mutton Boneless Pickle",
     description: "Deep flavour, no bones.",
-    image: keemaPickleImage,
+    image: muttonPickleImage,
     prices: { "250gm": 650, "500gm": 1300, "1kg": 2600 },
   },
   {
     category: "Mutton Pickles",
     name: "Gongura Mutton Pickle",
     description: "Tangy gongura mutton mix.",
-    image: keemaPickleImage,
+    image: gonguraMuttonPickleImage,
     prices: { "250gm": 600, "500gm": 1200, "1kg": 2400 },
   },
   {
     category: "Mutton Pickles",
     name: "Gongura Mutton Boneless Pickle",
     description: "Tangy gongura, boneless mutton.",
-    image: keemaPickleImage,
+    image: gonguraMuttonPickleImage,
     prices: { "250gm": 700, "500gm": 1400, "1kg": 2800 },
   },
   {
@@ -100,7 +106,7 @@ export const fullMenu = [
     category: "Mutton Pickles",
     name: "Gongura Mutton Kheema",
     description: "Tangy gongura kheema blend.",
-    image: keemaPickleImage,
+    image: gonguraMuttonKheemaPickleImage,
     prices: { "250gm": 700, "500gm": 1400, "1kg": 2800 },
   },
   {
@@ -114,7 +120,7 @@ export const fullMenu = [
     category: "Prawns Pickles",
     name: "Gongura Prawn Pickle",
     description: "Tangy gongura, coastal catch.",
-    image: prawnPickleImage,
+    image: gonguraPrawnPickleImage,
     prices: { "250gm": 550, "500gm": 1100, "1kg": 2200 },
   },
   {
