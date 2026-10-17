@@ -110,7 +110,7 @@ export default function Navbar({
           aria-label={`Shopping cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
         >
           <ShoppingBag />
-          {cartCount > 0 && <span>{cartCount}</span>}
+          {cartCount > 0 && <span key={cartCount}>{cartCount}</span>}
         </button>
       </div>
     </header>

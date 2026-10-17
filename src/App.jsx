@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { chickenPickleImage, fullMenu, reviews } from "./data/products";
 import { useCart } from "./hooks/useCart.js";
+import { useScrollReveal } from "./hooks/useScrollReveal.js";
 import { filterCatalog } from "./utils/filterCatalog.js";
 import Announcement from "./components/Announcement.jsx";
 import Navbar from "./components/Navbar.jsx";
@@ -58,6 +59,8 @@ export default function App() {
     toast,
     showToast,
   } = useCart();
+
+  useScrollReveal();
 
   const searchInputRef = useRef(null);
   const navActionsRef = useRef(null);
